@@ -25,14 +25,17 @@ exports.getSpeciesData = async function (species) {
         if (results.length === 0) {
             throw "API returned an empty array";
         }
-        await redisClient.set(species, JSON.stringify(results));
+        await redisClient.set(species, JSON.stringify(results), {
+            EX: 180,
+            NX: true,
+        });
     }
 
     return {
         fromCache: isCached,
         data: results,
     }
-}
+};
 
 async function fetchApiData(species) {
     const apiResponse = await axios.get(
@@ -40,4 +43,4 @@ async function fetchApiData(species) {
     );
     console.log("Request sent to the API");
     return apiResponse.data;
-}
+};
