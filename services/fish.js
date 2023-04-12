@@ -11,28 +11,24 @@ let redisClient;
     await redisClient.connect();
 })();
 
+exports.cacheData = async function (species) {
+    return await redisClient.get(species);
+};
+
 exports.getSpeciesData = async function (species) {
-    let results;
-    let isCached = false;
+    let results = await fetchApiData(species);
 
-    const cacheResults = await redisClient.get(species);
-
-    if (cacheResults) {
-        isCached = true;
-        results = JSON.parse(cacheResults);
-    } else {
-        results = await fetchApiData(species);
-        if (results.length === 0) {
-            throw "API returned an empty array";
-        }
-        await redisClient.set(species, JSON.stringify(results), {
-            EX: 180,
-            NX: true,
-        });
+    if (results.length === 0) {
+        throw "API returned an empty array";
     }
 
+    await redisClient.set(species, JSON.stringify(results), {
+        EX: 180,
+        NX: true,
+    });
+
     return {
-        fromCache: isCached,
+        fromCache: false,
         data: results,
     }
 };
